@@ -334,6 +334,71 @@ fbq('track', 'PageView');
     />
   </svg>
 </a>
+<script>
+/* ---------- Meta Pixel Lead on Telegram clicks ---------- */
+(function () {
+  // Безпечно викликаємо fbq
+  function trackLead(placement) {
+    try {
+      fbq('track', 'Lead', {
+        content_name: 'Telegram',
+        content_category: 'messenger',
+        placement: placement,
+        page: location.pathname + location.search
+      });
+      // Для налагодження (видалити на проді, якщо не треба)
+      console.debug('[Pixel] Lead →', placement);
+    } catch (e) {
+      console.warn('fbq Lead error:', e);
+    }
+  }
+
+  // Прив’язка слухачів до конкретних місць
+  function bind(selector, placement) {
+    document.querySelectorAll(selector).forEach(function (el) {
+      // Щоб не дублювати, якщо скрипт підключать двічі:
+      if (el.dataset.fbLeadBound === '1') return;
+      el.dataset.fbLeadBound = '1';
+
+      el.addEventListener('click', function () {
+        trackLead(placement);
+      }, { passive: true });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    // 1) Шапка: кнопка Telegram
+    bind('.site-header .btn-telegram[href*="t.me"]', 'header_button');
+
+    // 2) Шапка: «бургер», який веде у TG
+    bind('.site-header .burger[href*="t.me"]', 'header_burger');
+
+    // 3) Мобільне меню
+    bind('.mobile-nav a[href*="t.me"]', 'mobile_nav');
+
+    // 4) Hero CTA → TG
+    bind('.hero .btn-primary[href*="t.me"]', 'hero_cta');
+
+    // 5) Footer CTA → TG
+    bind('.cta-footer .btn-primary[href*="t.me"]', 'footer_cta');
+
+    // 6) Кнопка у модальному вікні
+    bind('#goTelegram', 'modal_button');
+
+    // 7) Плаваюча кругла кнопка
+    bind('#floating-telegram[href*="t.me"]', 'floating_button');
+
+    // 8) Будь-які інші посилання/кнопки з атрибутом data-telegram
+    //    (щоб легко додавати нові місця без змін JS)
+    document.body.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-telegram]');
+      if (!btn) return;
+      var place = btn.getAttribute('data-telegram') || 'custom';
+      trackLead(place);
+    }, { passive: true });
+  });
+})();
+</script>
 
 </body>
 </html>
